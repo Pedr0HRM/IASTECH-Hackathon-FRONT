@@ -1,0 +1,26 @@
+# Imagem para XLS
+
+Landing page de conversão de imagem → planilha Excel. Front-end pronto e funcional (upload, drag-and-drop, validação); a chamada real ao backend fica marcada com `TODO` em `script.js`.
+
+## Arquivos
+- `index.html` — estrutura da página
+- `style.css` — visual (tema escuro/roxo)
+- `script.js` — lógica de upload, drag-and-drop e botão de exportar
+
+## Conectando o backend
+Em `script.js`, dentro do listener de `exportBtn`, troque o bloco de simulação pela chamada real, por exemplo:
+
+```js
+const formData = new FormData();
+formData.append("image", currentFile);
+
+const response = await fetch("https://SEU-BACKEND-AQUI/converter", {
+  method: "POST",
+  body: formData
+});
+
+const blob = await response.blob();
+downloadBlob(blob, "tabela-convertida.xlsx");
+```
+
+`downloadBlob` já existe no arquivo e dispara o download do `.xlsx` retornado.
