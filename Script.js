@@ -1,6 +1,7 @@
 // ===== CONFIG =====
 const MAX_SIZE_MB = 10;
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const API_URL = "http://localhost:8000/api/process";
 
 // ===== ELEMENTS =====
 const dropzone       = document.getElementById("dropzone");
@@ -16,6 +17,7 @@ const exportBtn      = document.getElementById("export-btn");
 const statusMsg      = document.getElementById("status-msg");
 
 let currentFile = null;
+let isProcessing = false;
 
 // ===== TABS (Converter / Sobre) =====
 document.querySelectorAll(".menu-item").forEach(btn => {
@@ -128,47 +130,48 @@ function formatSize(bytes) {
 }
 
 // ===== EXPORT BUTTON =====
-// Placeholder logic: swap the inside of this handler for your real API call
-// once the backend is ready (see README.md "Conectando o backend").
 exportBtn.addEventListener("click", async () => {
-  if (!currentFile) return;
+  if (!currentFile || isProcessing) return;
 
+  isProcessing = true;
   setLoading(true);
   statusMsg.textContent = "Processando imagem...";
 
   try {
-    // ---- TODO: substitua este bloco pela chamada real ao backend ----
-    // Exemplo de como ficará quando o backend existir:
-    //
-    // const formData = new FormData();
-    // formData.append("image", currentFile);
-    //
-    // const response = await fetch("https://SEU-BACKEND-AQUI/converter", {
-    //   method: "POST",
-    //   body: formData
-    // });
-    //
-    // if (!response.ok) throw new Error("Falha na conversão.");
-    //
-    // const blob = await response.blob();
-    // downloadBlob(blob, "tabela-convertida.xlsx");
+    const formData = new FormData();
+    formData.append("file", currentFile);
 
-    // Simulação temporária (remova quando o backend estiver pronto):
-    await new Promise(resolve => setTimeout(resolve, 1200));
-    statusMsg.textContent = "Backend ainda não conectado — veja o README.";
-    // -------------------------------------------------------------
+    const response = await fetch(API_URL, {
+      method: "POST",
+      body: formData
+    });
+
+    if (!response.ok) {
+      let message = "Não foi possível processar a imagem.";
+      try {
+        const errorData = await response.json();
+        message = errorData.detail || message;
+      } catch (parseError) {
+      }
+      throw new Error(message);
+    }
+
+    const csvBlob = await response.blob();
+    downloadBlob(csvBlob, "resultado.csv");
+    statusMsg.textContent = "CSV gerado com sucesso.";
 
   } catch (err) {
     console.error(err);
-    showError("Não foi possível converter a imagem. Tente novamente.");
+    showError(err.message || "Não foi possível converter a imagem. Tente novamente.");
     statusMsg.textContent = "";
   } finally {
+    isProcessing = false;
     setLoading(false);
   }
 });
 
 function setLoading(isLoading) {
-  exportBtn.disabled = isLoading;
+  exportBtn.disabled = isLoading || !currentFile;
   exportBtn.classList.toggle("loading", isLoading);
   exportBtn.querySelector("svg").style.display = isLoading ? "none" : "inline-block";
   const label = isLoading ? "Convertendo..." : "Exportar para XLS";
