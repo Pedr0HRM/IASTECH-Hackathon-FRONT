@@ -1,26 +1,84 @@
-# Imagem para XLS
+# Imagem para XLS — frontend
 
-Landing page de conversão de imagem → planilha Excel. Front-end pronto e funcional (upload, drag-and-drop, validação); a chamada real ao backend fica marcada com `TODO` em `script.js`.
+Landing page que envia um P&ID para a API do IASTECH e devolve a planilha
+de equipamentos. A integração com o backend está **implementada e
+funcionando** — este arquivo descreve o contrato, não um TODO.
 
 ## Arquivos
-- `index.html` — estrutura da página
-- `style.css` — visual (tema escuro/roxo)
-- `script.js` — lógica de upload, drag-and-drop e botão de exportar
 
-## Conectando o backend
-Em `script.js`, dentro do listener de `exportBtn`, troque o bloco de simulação pela chamada real, por exemplo:
+- `Index.html` — estrutura da página
+- `Style.css`  — visual (tema escuro/roxo)
+- `Script.js`  — upload, drag-and-drop, chamadas à API, prévia e download
 
-```js
-const formData = new FormData();
-formData.append("image", currentFile);
+> Os nomes começam com maiúscula. As referências no `Index.html` precisam
+> respeitar isso: no Windows funciona de qualquer jeito, mas num servidor
+> Linux (ou GitHub Pages) `style.css` e `Style.css` são arquivos
+> diferentes, e a página abriria sem CSS nem JS.
 
-const response = await fetch("https://SEU-BACKEND-AQUI/converter", {
-  method: "POST",
-  body: formData
-});
+## Backend
 
-const blob = await response.blob();
-downloadBlob(blob, "tabela-convertida.xlsx");
-```
+Repositório: `Hackaton-IASTECH`. Suba com `docker compose up`; a API fica
+em `http://localhost:8000` (configurável em `API_BASE`, no topo do
+`Script.js`).
 
-`downloadBlob` já existe no arquivo e dispara o download do `.xlsx` retornado.
+O backend já manda os cabeçalhos de CORS e expõe o `Content-Disposition`,
+então não é preciso proxy nem configuração extra no navegador.
+
+## Fluxo
+
+1. **Processar** — `POST /api/process?formato=json`, campo `file` do
+   FormData. Responde com a quantidade, as linhas para a prévia e os links
+   de download:
+
+   ```json
+   {
+     "execucao_id": 23,
+     "quantidade": 20,
+     "linhas": [
+       {"TAG": "PI-0013", "Tipo": "Instrumento",
+        "Descrição": "Indicador de Pressão",
+        "Coordenada X": 159, "Coordenada Y": 142, "Grupo": "1"}
+     ],
+     "download": {
+       "xlsx": "/api/resultado/23?formato=xlsx",
+       "csv":  "/api/resultado/23?formato=csv"
+     }
+   }
+   ```
+
+2. **Exportar** — `GET` no link de `download.xlsx`. Não reprocessa a
+   imagem, que custa alguns segundos de CPU.
+
+   Quando `download` vem `null` (a gravação da execução no backend é
+   best-effort e pode falhar), o `Script.js` reenvia a imagem com
+   `?formato=xlsx` e recebe o arquivo direto.
+
+O nome do arquivo salvo sai do `Content-Disposition` da resposta, não de
+uma constante. Fixá-lo no código foi o que já produziu um `.xlsx` salvo
+como `.csv`.
+
+## Erros
+
+O backend devolve a razão em `detail`, no padrão do FastAPI:
+
+| Status | Quando | O que o usuário vê |
+|---|---|---|
+| `400` | Arquivo não é imagem, está corrompido, vazio ou grande demais | A mensagem do backend |
+| `503` | Checkpoint do modelo não instalado | A mensagem apontando onde o `.pt` é esperado |
+| `500` | Falha durante o processamento | A mensagem do backend |
+
+Falha de conexão é tratada à parte: em vez do `Failed to fetch` cru do
+navegador, o usuário lê que o servidor não respondeu e onde ele era
+esperado.
+
+## Validação no cliente
+
+Os limites do `Script.js` espelham os de `app/config.py` no backend:
+50 MB e JPG/PNG/WEBP/BMP/TIFF. Manter o cliente mais restritivo só faria
+o usuário receber "formato não suportado" por um arquivo que a API
+aceitaria.
+
+A checagem usa `file.type` e, como segunda chance, a extensão — o
+navegador nem sempre preenche o MIME (TIFF costuma vir vazio). Quem decide
+de verdade é o backend, que olha o conteúdo do arquivo e não confia no
+`content-type` enviado.

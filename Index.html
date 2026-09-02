@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Imagem para XLS</title>
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="Style.css">
 </head>
 <body>
 
@@ -38,7 +38,7 @@
         <p class="subtitle">Envie uma imagem de uma tabela e receba os dados em Excel.</p>
 
         <label class="dropzone" id="dropzone" for="file-input">
-          <input type="file" id="file-input" accept=".jpg,.jpeg,.png,.webp" hidden>
+          <input type="file" id="file-input" accept=".jpg,.jpeg,.png,.webp,.bmp,.tif,.tiff" hidden>
 
           <div class="dropzone-idle" id="dropzone-idle">
             <div class="upload-icon">
@@ -51,7 +51,7 @@
             </div>
             <p class="dropzone-title">Arraste e solte sua imagem aqui</p>
             <p class="dropzone-sub">ou clique para selecionar</p>
-            <p class="dropzone-hint">JPG, PNG ou WEBP até 10MB</p>
+            <p class="dropzone-hint">JPG, PNG, WEBP, BMP ou TIFF até 50MB</p>
           </div>
 
           <div class="dropzone-preview" id="dropzone-preview" hidden>
@@ -64,11 +64,51 @@
 
         <p class="error-msg" id="error-msg" hidden></p>
 
+        <!-- Progresso: indeterminado de propósito. A API responde de uma vez
+             só, sem reportar andamento, então uma barra com porcentagem
+             seria invenção. -->
+        <div class="progress" id="progress" hidden>
+          <div class="progress-bar"></div>
+        </div>
+
+        <!-- RESULTADO -->
+        <section class="result" id="result" hidden>
+          <div class="result-head">
+            <p class="result-count">
+              <strong id="result-count">0</strong> equipamentos encontrados
+            </p>
+            <span class="result-hint" id="result-hint"></span>
+          </div>
+
+          <div class="table-wrap">
+            <table class="result-table">
+              <thead>
+                <tr>
+                  <th>TAG</th>
+                  <th>Tipo</th>
+                  <th>Descrição</th>
+                  <th>Coord. X</th>
+                  <th>Coord. Y</th>
+                  <th>Grupo</th>
+                </tr>
+              </thead>
+              <tbody id="result-body"></tbody>
+            </table>
+          </div>
+        </section>
+
         <div class="divider"></div>
 
         <div class="actions">
           <span class="status-msg" id="status-msg"></span>
-          <button class="btn-primary" id="export-btn" type="button" disabled>
+          <button class="btn-primary" id="process-btn" type="button" disabled>
+            <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M10 2.5a7.5 7.5 0 1 1-7.06 5M2.5 3.5v4h4" stroke="currentColor"
+                    stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Processar
+          </button>
+          <button class="btn-primary" id="export-btn" type="button" hidden>
             <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M10 3v10m0 0-3.5-3.5M10 13l3.5-3.5M4 15.5h12" stroke="currentColor"
                     stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
@@ -105,6 +145,6 @@
     </main>
   </div>
 
-  <script src="script.js"></script>
+  <script src="Script.js"></script>
 </body>
 </html>
